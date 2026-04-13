@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UrokPlus API</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2332;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --orange: #d29922;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      margin: 0;
+      padding: 2rem;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 { font-size: 1.75rem; margin-top: 0; color: var(--accent); }
+    h2 { font-size: 1.2rem; margin-top: 2rem; color: var(--text); border-bottom: 1px solid var(--card); padding-bottom: 0.5rem; }
+    p { color: var(--muted); }
+    .method {
+      display: inline-block;
+      padding: 0.2em 0.5em;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .get { background: var(--green); color: #000; }
+    .post { background: var(--orange); color: #000; }
+    .put { background: var(--accent); color: #000; }
+    .endpoint { font-family: ui-monospace, monospace; background: var(--card); padding: 0.5rem 0.75rem; border-radius: 6px; margin: 0.5rem 0; word-break: break-all; }
+    pre { background: var(--card); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.9rem; }
+    code { font-family: ui-monospace, monospace; }
+    .block { margin: 1.5rem 0; }
+    ul { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <h1>UrokPlus API</h1>
+  <p>REST API для приложения UrokPlus. Соответствует данным: пользователи, профиль, чаты/сообщения, оценки. База данных — PostgreSQL.</p>
+
+  <h2>Проверка работы</h2>
+  <div class="block">
+    <span class="method get">GET</span>
+    <div class="endpoint">/api/health</div>
+    <p>Ответ: <code>{ "ok": true, "database": "connected" }</code></p>
+  </div>
+
+  <h2>Авторизация</h2>
+  <div class="block">
+    <span class="method post">POST</span>
+    <div class="endpoint">/api/auth/register</div>
+    <p>Тело (JSON): <code>login</code>, <code>password</code>, <code>confirm</code>, <code>role</code> (STUDENT | PARENT | TEACHER)</p>
+    <pre>{
+  "login": "ivan",
+  "password": "secret123",
+  "confirm": "secret123",
+  "role": "STUDENT"
+}</pre>
+    <p>Успех: <code>{ "success": true, "user": { "id", "login", "role" } }</code></p>
+  </div>
+  <div class="block">
+    <span class="method post">POST</span>
+    <div class="endpoint">/api/auth/login</div>
+    <p>Тело: <code>login</code>, <code>password</code></p>
+    <p>Успех: <code>{ "success": true, "user": { "id", "login", "role" } }</code></p>
+  </div>
+
+  <h2>Профиль</h2>
+  <div class="block">
+    <span class="method get">GET</span>
+    <div class="endpoint">/api/profile</div>
+    <p>Заголовок <code>X-User-Id</code> или query <code>?userId=1</code> — id пользователя.</p>
+    <p>Ответ: <code>{ "name", "school", "grade", "avatarUrl" }</code></p>
+  </div>
+  <div class="block">
+    <span class="method put">PUT</span>
+    <div class="endpoint">/api/profile</div>
+    <p>Тело: <code>name</code>, <code>school</code>, <code>grade</code>, <code>avatarUrl</code> (опционально <code>userId</code>)</p>
+  </div>
+
+  <h2>Сообщения чата</h2>
+  <div class="block">
+    <span class="method get">GET</span>
+    <div class="endpoint">/api/chats/:chatId/messages</div>
+    <p>Список сообщений чата. <code>chatId</code> — строка (например, имя чата).</p>
+    <p>Ответ: массив <code>{ "id", "chatId", "text", "isMe", "type", "timestamp" }</code>, <code>type</code>: TEXT | IMAGE | VOICE</p>
+  </div>
+  <div class="block">
+    <span class="method post">POST</span>
+    <div class="endpoint">/api/chats/:chatId/messages</div>
+    <p>Тело: <code>text</code>, <code>isMe</code> (bool), <code>type</code> (TEXT|IMAGE|VOICE), <code>timestamp</code> (опционально)</p>
+  </div>
+
+  <h2>Оценки</h2>
+  <div class="block">
+    <span class="method get">GET</span>
+    <div class="endpoint">/api/grades</div>
+    <p>Список событий оценок. Ответ: массив <code>{ "id", "studentName", "subject", "grade", "workType", "timestamp", "isRead" }</code></p>
+  </div>
+  <div class="block">
+    <span class="method post">POST</span>
+    <div class="endpoint">/api/grades</div>
+    <p>Тело: <code>studentName</code>, <code>subject</code>, <code>grade</code>, <code>workType</code>, <code>timestamp</code> (опционально)</p>
+  </div>
+
+  <h2>Расписание (опционально)</h2>
+  <div class="block">
+    <span class="method get">GET</span>
+    <div class="endpoint">/api/lessons?day=1</div>
+    <p><code>day</code> — день недели 1–7 (1 = понедельник). Без параметра — текущий день.</p>
+    <p>Ответ: массив уроков <code>{ "id", "name", "time", "homework", "teacher", "gradeClass" }</code></p>
+  </div>
+
+  <p style="margin-top: 2rem; font-size: 0.9rem;">База данных инициализируется скриптом <code>database/init.sql</code>. Подключение задаётся переменной <code>DATABASE_URL</code>.</p>
+</body>
+</html>
